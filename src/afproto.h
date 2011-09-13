@@ -18,4 +18,8 @@ void afproto_get_frame(const char *buffer,
                        uint8_t *offset,
                        AfprotoFrame *frame);
 
+void afproto_serialize_frame(char *buffer,
+                             uint8_t offset,
+                             AfprotoFrame *frame);
+
 #endif

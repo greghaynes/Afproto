@@ -1,6 +1,8 @@
 #include "afproto.h"
+#include "crc8.h"
 
 uint8_t afproto_frame_is_valid(AfprotoFrame *frame) {
+	return crc_8(frame->payload, frame->length - 2) == frame->crc;
 }
 
 void afproto_get_frame(const char *buffer,
@@ -32,6 +34,18 @@ void afproto_get_frame(const char *buffer,
 		}
 		++buff_itr;
 	}
+}
+
+void afproto_serialize_frame(char *buffer,
+                             uint8_t offset,
+                             AfprotoFrame *frame) {
+	uint8_t len = frame->length-2;
+	uint8_t i;
+	buffer[offset++] = AFPROTO_FRAME_START_BYTE;
+	buffer[offset++] = frame->length;
+	buffer[offset++] = frame->crc;
+	for(i = 0;len;len--,i++)
+		buffer[offset++] = frame->payload[i];
 }
 
 #if TEST_GCC
