@@ -10,7 +10,6 @@ void afproto_get_frame(const char *buffer,
                        uint8_t *offset,
                        AfprotoFrame *frame) {
 	uint8_t buff_itr = *offset;
-	*offset = 0;
 
 	// Frames are larger than two btyes
 	if(length < 3)
@@ -32,8 +31,12 @@ void afproto_get_frame(const char *buffer,
 				return;
 			}
 		}
+		*offset++;
 		++buff_itr;
 	}
+	frame->length = 0;
+	frame->crc = 0;
+	frame->payload = 0;
 }
 
 void afproto_serialize_frame(char *buffer,
@@ -48,7 +51,23 @@ void afproto_serialize_frame(char *buffer,
 		buffer[offset++] = frame->payload[i];
 }
 
+void afproto_create_frame(const char *buffer,
+                          uint8_t length,
+                          AfprotoFrame *frame) {
+	frame->length = length + 2;
+	frame->payload = buffer;
+	frame->crc = crc_8(buffer, length);
+}
+
 #if TEST_GCC
 int main(int argc, char **argv) {
+	char buff[512];
+	uint8_t off = 0;
+
+	AfprotoFrame f;
+	afproto_create_frame("hello", 6, &f);
+	afproto_serialize_frame(buff, 0, &f);
+	afproto_get_frame(buff, 512, &off, &f);
+	printf("%d: %s\n", f.length-2, f.payload);
 }
 #endif

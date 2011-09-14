@@ -22,4 +22,8 @@ void afproto_serialize_frame(char *buffer,
                              uint8_t offset,
                              AfprotoFrame *frame);
 
+void afproto_create_frame(const char *buffer,
+                          uint8_t length,
+                          AfprotoFrame *frame);
+
 #endif
