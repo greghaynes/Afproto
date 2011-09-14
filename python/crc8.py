@@ -27,6 +27,7 @@ class Crc8(object):
 		self.sum=self.TABLE[self.sum^b]
 
 	def digest(self, st):
+		self.sum=0
 		for ch in st:
 			self._update(ord(ch))
 		return self.sum
