@@ -1,3 +1,6 @@
 Afproto - Serial Data Framing Protocol for 8bit MCUs
 ----------
 
+Each directory contains source code for parsing the protocol in a specific
+language and or implementation.
+

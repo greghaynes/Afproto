@@ -65,9 +65,9 @@ int main(int argc, char **argv) {
 	uint8_t off = 0;
 
 	AfprotoFrame f;
-	afproto_create_frame("hello", 6, &f);
+	afproto_create_frame("Hello", 6, &f);
 	afproto_serialize_frame(buff, 0, &f);
 	afproto_get_frame(buff, 512, &off, &f);
-	printf("%d: %s\n", f.length-2, f.payload);
+	printf("%u (%u): %s\n", f.length-2, f.crc, f.payload);
 }
 #endif
