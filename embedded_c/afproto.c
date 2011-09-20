@@ -54,19 +54,20 @@ uint8_t afproto_get_frame(const char *buffer,
 void afproto_serialize_frame(char *buffer,
                              uint8_t offset,
                              AfprotoFrame *frame) {
-	uint8_t len = frame->length-3;
+	uint8_t len = frame->length-4;
 	uint8_t i;
 	buffer[offset++] = AFPROTO_FRAME_START_BYTE;
 	buffer[offset++] = frame->length;
-	buffer[offset++] = frame->crc;
 	for(i = 0;len;len--,i++)
 		buffer[offset++] = frame->payload[i];
+	buffer[offset++] = frame->crc;
+	buffer[offset++] = AFPROTO_FRAME_END_BYTE;
 }
 
 void afproto_create_frame(const char *buffer,
                           uint8_t length,
                           AfprotoFrame *frame) {
-	frame->length = length + 3;
+	frame->length = length + 4;
 	frame->payload = buffer;
 	frame->crc = crc_8(buffer, length);
 }
