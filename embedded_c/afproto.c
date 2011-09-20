@@ -1,42 +1,54 @@
 #include "afproto.h"
 #include "crc8.h"
 
-uint8_t afproto_frame_is_valid(AfprotoFrame *frame) {
-	return crc_8(frame->payload, frame->length - 3) == frame->crc;
+#ifdef TEST_GCC
+#include <stdio.h>
+#endif
+
+uint8_t afproto_frame_check_crc(AfprotoFrame *frame) {
+	return crc_8(frame->payload, frame->length - 4) == frame->crc;
 }
 
-void afproto_get_frame(const char *buffer,
-                       uint16_t length,
-                       uint8_t *offset,
+uint8_t afproto_get_frame_at(const char *buffer,
+                          uint8_t length,
+                          AfprotoFrame *frame) {
+	uint8_t buff_itr = 0;
+
+
+	if(buffer[0] != AFPROTO_FRAME_START_BYTE)
+		return 0;
+
+	while(buffer[buff_itr] != AFPROTO_FRAME_END_BYTE) buff_itr++;
+
+	frame->length = buff_itr + 1;
+	frame->payload = buffer+2;
+	frame->crc = buffer[frame->length-2];
+
+	if(frame->length != buffer[1] || !afproto_frame_check_crc(frame))
+		return 0;
+
+	return 1;
+}
+
+uint8_t afproto_get_frame(const char *buffer,
+                       uint8_t length,
                        AfprotoFrame *frame) {
-	uint8_t buff_itr = *offset;
+	uint8_t buff_itr = 0;
+	uint8_t got_frame = 0;
 
-	// Frames are larger than two btyes
-	if(length < 3)
-		return;
+	// Frame minimum size
+	if(length < 4)
+		return 0;
 
-	while(buff_itr < length) {
-		if(buffer[buff_itr] == AFPROTO_FRAME_START_BYTE) {
-			frame->length = buffer[buff_itr+1];
-
-			// Check that frame can fit in remaining buffer
-			if(frame->length > (length - buff_itr))
-				continue;
-
-			frame->crc = buffer[buff_itr+2];
-			frame->payload = &buffer[buff_itr+3];
-
-			if(afproto_frame_is_valid(frame)) {
-				*offset = buff_itr + frame->length;
-				return;
-			}
-		}
-		*offset++;
-		++buff_itr;
+	while(!got_frame) {
+		while(buffer[buff_itr] != AFPROTO_FRAME_START_BYTE && buff_itr < (length - 4)) buff_itr++;
+		if(buff_itr >= (length - 4))
+			return 0;
+		if(afproto_get_frame_at(&buffer[buff_itr], length - buff_itr, frame))
+			got_frame = 1;
 	}
-	frame->length = 0;
-	frame->crc = 0;
-	frame->payload = 0;
+
+	return got_frame;
 }
 
 void afproto_serialize_frame(char *buffer,
@@ -61,7 +73,7 @@ void afproto_create_frame(const char *buffer,
 
 #if TEST_GCC
 int main(int argc, char **argv) {
-	char buff[512];
+	char buff[256];
 	uint8_t off = 0;
 	int i;
 
@@ -71,7 +83,7 @@ int main(int argc, char **argv) {
 	for(i = 0;i < f.length;++i)
 		printf("%x ", (uint8_t)buff[i]);
 	printf("\n");
-	afproto_get_frame(buff, 512, &off, &f);
+	afproto_get_frame(buff, 255, &f);
 	printf("%u (%u): %s\n", f.length-3, f.crc, f.payload);
 }
 #endif

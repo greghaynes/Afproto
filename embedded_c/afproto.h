@@ -5,7 +5,8 @@
 #include <stdint.h>
 #endif
 
-#define AFPROTO_FRAME_START_BYTE 0x0d
+#define AFPROTO_FRAME_START_BYTE 0xA3
+#define AFPROTO_FRAME_END_BYTE 0x5D
 
 typedef struct AfprotoFrame {
 	uint8_t length;
@@ -13,10 +14,9 @@ typedef struct AfprotoFrame {
 	const char *payload;
 } AfprotoFrame;
 
-void afproto_get_frame(const char *buffer,
-                       uint16_t length,
-                       uint8_t *offset,
-                       AfprotoFrame *frame);
+uint8_t afproto_get_frame(const char *buffer,
+                          uint8_t length,
+                          AfprotoFrame *frame);
 
 void afproto_serialize_frame(char *buffer,
                              uint8_t offset,
