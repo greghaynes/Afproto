@@ -1,16 +1,23 @@
 #include "afproto.h"
 #include "crc8.h"
 
-uint8_t afproto_get_payload(const char *buffer,
+#ifdef TEST_GCC
+#include <stdio.h>
+#endif
+
+uint8_t afproto_get_payload(const unsigned char *buffer,
                             uint8_t buff_length,
-                            char *payload) {
+                            unsigned char *payload,
+                            uint8_t *payload_length) {
 	uint8_t ndx = 0;
 	uint8_t start_ndx;
 	uint8_t crc = 0;
 	uint8_t length;
 
+	*payload_length = 0;
+
 	// Find frame start
-	while(ndx < length && buffer[ndx] != AFPROTO_FRAME_START_BYTE) {
+	while(ndx < buff_length && buffer[ndx] != AFPROTO_FRAME_START_BYTE) {
 		if(buffer[ndx] == AFPROTO_FRAME_ESCAPE_BYTE) ndx+=2;
 		else ++ndx;
 	} 
@@ -21,6 +28,7 @@ uint8_t afproto_get_payload(const char *buffer,
 
 	++ndx;
 	length = buffer[ndx];
+	ndx += 2;
 
 	// Copy payload, gen crc, and unescape
 	uint8_t end_ndx = length + ndx;
@@ -37,8 +45,7 @@ uint8_t afproto_get_payload(const char *buffer,
 	}
 
 	// Check end byte
-	ndx++;
-	if(buffer[ndx] != AFPROTO_FRAME_END_BYTE) return 0;
+	if(buffer[ndx++] != AFPROTO_FRAME_END_BYTE) return 0;
 
 	// Check length
 	if(ndx - start_ndx != length + 4) return 0;
@@ -46,12 +53,13 @@ uint8_t afproto_get_payload(const char *buffer,
 	// Check crc
 	if(crc != buffer[start_ndx+2]) return 0;
 
+	*payload_length = length;
 	return ndx;
 }
 
-uint8_t afproto_serialize_payload(const char *payload,
+uint8_t afproto_serialize_payload(const unsigned char *payload,
                                   uint8_t length,
-                                  char *dest) {
+                                  unsigned char *dest) {
 	uint8_t crc = 0;
 	uint8_t ndx = 3;
 	uint8_t payload_ndx = 0;
@@ -71,14 +79,27 @@ uint8_t afproto_serialize_payload(const char *payload,
 
 	dest[1] = length;
 	dest[2] = crc;
-	dest[ndx] = AFPROTO_FRAME_END_BYTE;
+	dest[ndx++] = AFPROTO_FRAME_END_BYTE;
+
+	return ndx;
 }
 
 #if TEST_GCC
 int main(int argc, char **argv) {
 	char buff[256];
-	uint8_t off = 0;
+	char buff2[256];
+	uint8_t length;
 	int i;
 
+	length = afproto_serialize_payload("Hello", 5, buff);
+	for(i = 0;i < length;++i)
+		printf("%x ", (uint8_t)buff[i]);
+	printf("\n");
+
+	afproto_get_payload("\xa3\x05\xeb\x48\x65\x6c\x6c\x6f\x59", 9, buff2, &length);
+	printf("%d: ", length);
+	for(i = 0;i < length;i++)
+		printf("%c", buff2[i]);
+	printf("\n");
 }
 #endif
