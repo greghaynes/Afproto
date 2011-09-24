@@ -6,24 +6,14 @@
 #endif
 
 #define AFPROTO_FRAME_START_BYTE 0xA3
-#define AFPROTO_FRAME_END_BYTE 0x5D
+#define AFPROTO_FRAME_ESCAPE_BYTE 0x85
 
-typedef struct AfprotoFrame {
-	uint8_t length;
-	uint8_t crc;
-	const char *payload;
-} AfprotoFrame;
+uint8_t afproto_get_payload(const char *buffer,
+                            uint8_t length,
+                            char *payload);
 
-uint8_t afproto_get_frame(const char *buffer,
-                          uint8_t length,
-                          AfprotoFrame *frame);
-
-void afproto_serialize_frame(char *buffer,
-                             uint8_t offset,
-                             AfprotoFrame *frame);
-
-void afproto_create_frame(const char *buffer,
-                          uint8_t length,
-                          AfprotoFrame *frame);
+uint8_t afproto_serialize_payload(const char *payload,
+                                  uint8_t length,
+                                  char *dest)
 
 #endif

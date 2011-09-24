@@ -19,6 +19,11 @@ unsigned char Crc8Table[] = {
 	116, 42, 200, 150, 21, 75, 169, 247, 182, 232, 10, 84, 215, 137, 107, 53
 };
 
+unsigned char crc_8_update(unsigned char crc, unsigned char c)
+{
+	return Crc8Table[crc^c];
+}
+
 unsigned char crc_8(unsigned const char *pDst, unsigned char Length)
 {
 	unsigned char i,crcTemp=0;
