@@ -1,25 +1,8 @@
 #include "afproto.h"
 #include "crc8.h"
 
-#ifdef TEST_GCC
-#include <stdio.h>
-#endif
-
-void afproto_unescape_buffer(const char *src, uint8_t len, char *dest) {
-	uint8_t i;
-	for(i = 0;i < len;++i) {
-		if(src[i] == AFPROTO_FRAME_ESCAPE_BYTE && i < (len-1))
-			++i;
-		*(dest++) = src[i];
-	}
-}
-
-uint8_t afproto_frame_crc_is_valid(AfprotoFrame *frame) {
-	return crc_8(frame->payload, frame->length - 4) == frame->crc;
-}
-
 uint8_t afproto_get_payload(const char *buffer,
-                            uint8_t length,
+                            uint8_t buff_length,
                             char *payload) {
 	uint8_t ndx = 0;
 	uint8_t start_ndx;
@@ -42,7 +25,7 @@ uint8_t afproto_get_payload(const char *buffer,
 	// Copy payload, gen crc, and unescape
 	uint8_t end_ndx = length + ndx;
 	uint8_t payload_ndx = 0;
-	for(;ndx < end_ndx;++ndx) {
+	for(;ndx < end_ndx && ndx < buff_length;++ndx) {
 		if(buffer[ndx] == AFPROTO_FRAME_ESCAPE_BYTE) {
 			crc = crc_8_update(crc, buffer[ndx]);
 			++ndx;
@@ -53,29 +36,42 @@ uint8_t afproto_get_payload(const char *buffer,
 		payload[payload_ndx++] = buffer[ndx];
 	}
 
-	// Check crc and return
+	// Check end byte
+	ndx++;
+	if(buffer[ndx] != AFPROTO_FRAME_END_BYTE) return 0;
+
+	// Check length
+	if(ndx - start_ndx != length + 4) return 0;
+
+	// Check crc
 	if(crc != buffer[start_ndx+2]) return 0;
-	else return ndx;
+
+	return ndx;
 }
 
-void afproto_serialize_frame(char *buffer,
-                             AfprotoFrame *frame) {
-	uint8_t len = frame->length-3;
+uint8_t afproto_serialize_payload(const char *payload,
+                                  uint8_t length,
+                                  char *dest) {
+	uint8_t crc = 0;
+	uint8_t ndx = 3;
+	uint8_t payload_ndx = 0;
 	uint8_t i;
-	uint8_t offset = 0;
+	dest[0] = AFPROTO_FRAME_START_BYTE;
 
-	buffer[offset++] = AFPROTO_FRAME_START_BYTE;
-	buffer[offset++] = frame->length;
-	for(i = 0;i<len;++i) buffer[offset++] = frame->payload[i];
-	buffer[offset++] = frame->crc;
-}
+	for(;payload_ndx<length;++payload_ndx) {
+		if(payload[payload_ndx] == AFPROTO_FRAME_START_BYTE ||
+		   payload[payload_ndx] == AFPROTO_FRAME_ESCAPE_BYTE ||
+		   payload[payload_ndx] == AFPROTO_FRAME_END_BYTE) {
+			crc = crc_8_update(crc, AFPROTO_FRAME_ESCAPE_BYTE);
+			dest[ndx++] = AFPROTO_FRAME_ESCAPE_BYTE;
+		}
+		crc = crc_8_update(crc, payload[payload_ndx]);
+		dest[ndx++] = payload[payload_ndx];
+	}
 
-void afproto_create_frame(char *buffer,
-                          uint8_t length,
-                          AfprotoFrame *frame) {
-	frame->length = length + 3;
-	frame->payload = buffer;
-	frame->crc = crc_8(buffer, length);
+	dest[1] = length;
+	dest[2] = crc;
+	dest[ndx] = AFPROTO_FRAME_END_BYTE;
 }
 
 #if TEST_GCC
@@ -84,18 +80,5 @@ int main(int argc, char **argv) {
 	uint8_t off = 0;
 	int i;
 
-	AfprotoFrame f;
-	afproto_create_frame("Hello", 6, &f);
-	afproto_serialize_frame(buff, 0, &f);
-	for(i = 0;i < f.length;++i)
-		printf("%x ", (uint8_t)buff[i]);
-	printf("\n");
-	afproto_get_frame(buff, 255, &f);
-	printf("%u (%u): %s\n", f.length-3, f.crc, f.payload);
-
-	strcpy(buff, "\x05\x88\x34\xa3\x0a\x48\x65\x6c\x6c\x6f\x00\xc9\x5D\x50\x89");
-	afproto_get_frame(buff, 15, &f);
-
-	printf("%s\n", f.payload);
 }
 #endif
