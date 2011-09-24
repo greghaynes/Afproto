@@ -8,6 +8,15 @@ end_byte = 0x59
 
 crcer = Crc8()
 
+def serialize_payload(payload):
+	out = struct.pack('BBB', start_byte, len(payload), crcer.digest(payload))
+	for ch in payload:
+		if ch == start_byte or ch == end_byte or ch == escape_byte:
+			out += escape_byte
+		out += ch
+	out += chr(end_byte)
+	return out
+
 def extract_payload(data):
 	# Find start_ndx
 	start_ndx = 0
@@ -37,6 +46,11 @@ def extract_payload(data):
 		return None, data[start_ndx:]
 
 	payload = data[start_ndx+3:end_ndx]
+
+	# unescape
+	payload.replace(chr(escape_byte) + chr(start_byte), chr(start_byte))
+	payload.replace(chr(escape_byte) + chr(end_byte), chr(end_byte))
+	payload.replace(chr(escape_byte) + chr(escape_byte), chr(escape_byte))
 	
 	if crc == crcer.digest(payload):
 		return payload, data[end_ndx+1:]
@@ -45,4 +59,8 @@ def extract_payload(data):
 
 if __name__=='__main__':
 	print extract_payload("\xa3\x05\xeb\x48\x65\x6c\x6c\x6f\x59")
+	out = serialize_payload('Hello')
+	for ch in out:
+		print '%x' % ord(ch),
+	print
 
