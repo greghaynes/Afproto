@@ -38,7 +38,8 @@ def extract_payload(data):
 		return None, data[start_ndx:]
 	length, crc = struct.unpack('BB', data[start_ndx+1:start_ndx+3])
 
-	print length, crc
+	if length == 0:
+		length, crc = struct.unpack('HB', data[start_ndx+2:start+ndx+5])
 
 	# Check end byte
 	end_ndx = start_ndx + length + 3
