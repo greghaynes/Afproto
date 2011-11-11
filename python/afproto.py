@@ -27,6 +27,8 @@ def extract_payload(data):
 				break
 			elif start_ndx == 0:
 				break
+		elif start_ndx == -1:
+			break
 		start_ndx += 1
 
 	# If no start found trash data
@@ -38,12 +40,12 @@ def extract_payload(data):
 		return None, data[start_ndx:]
 	length, crc = struct.unpack('BB', data[start_ndx+1:start_ndx+3])
 
-	if length == 0:
-		length, crc = struct.unpack('HB', data[start_ndx+2:start+ndx+5])
-
 	# Check end byte
 	end_ndx = start_ndx + length + 3
-	if data[end_ndx] != chr(end_byte) or data[end_ndx-1] == chr(escape_byte):
+	try:
+		if data[end_ndx] != chr(end_byte) or data[end_ndx-1] == chr(escape_byte):
+			return None, data[start_ndx+1:]
+	except IndexError:
 		return None, data[start_ndx:]
 
 	payload = data[start_ndx+3:end_ndx]
@@ -56,6 +58,7 @@ def extract_payload(data):
 	if crc == crcer.digest(payload):
 		return payload, data[end_ndx+1:]
 
+	print 'No payload'
 	return None, data[end_ndx+1:]
 
 if __name__=='__main__':
