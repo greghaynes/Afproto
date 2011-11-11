@@ -64,7 +64,6 @@ uint8_t afproto_serialize_payload(const unsigned char *payload,
 	uint8_t ndx = 3;
 	uint8_t payload_ndx = 0;
 	uint8_t i;
-	dest[0] = AFPROTO_FRAME_START_BYTE;
 
 	for(;payload_ndx<length;++payload_ndx) {
 		if(payload[payload_ndx] == AFPROTO_FRAME_START_BYTE ||
@@ -77,6 +76,7 @@ uint8_t afproto_serialize_payload(const unsigned char *payload,
 		dest[ndx++] = payload[payload_ndx];
 	}
 
+	dest[0] = AFPROTO_FRAME_START_BYTE;
 	dest[1] = length;
 	dest[2] = crc;
 	dest[ndx++] = AFPROTO_FRAME_END_BYTE;
