@@ -44,18 +44,18 @@ def extract_payload(data):
 	end_ndx = start_ndx + length + 3
 	try:
 		if data[end_ndx] != chr(end_byte) or data[end_ndx-1] == chr(escape_byte):
+			print 'No end byte'
 			return None, data[start_ndx+1:]
 	except IndexError:
 		return None, data[start_ndx:]
 
 	payload = data[start_ndx+3:end_ndx]
 
-	# unescape
-	payload.replace(chr(escape_byte) + chr(start_byte), chr(start_byte))
-	payload.replace(chr(escape_byte) + chr(end_byte), chr(end_byte))
-	payload.replace(chr(escape_byte) + chr(escape_byte), chr(escape_byte))
-	
 	if crc == crcer.digest(payload):
+		# unescape
+		payload = payload.replace(chr(escape_byte) + chr(start_byte), chr(start_byte))
+		payload = payload.replace(chr(escape_byte) + chr(end_byte), chr(end_byte))
+		payload = payload.replace(chr(escape_byte) + chr(escape_byte), chr(escape_byte))
 		return payload, data[end_ndx+1:]
 
 	print 'No payload'
