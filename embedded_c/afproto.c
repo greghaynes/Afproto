@@ -61,7 +61,7 @@ uint8_t afproto_get_payload(const unsigned char *buffer,
 	// Check crc
 	if(crc != buffer[start_ndx+2]) return 0;
 
-	*payload_length = length;
+	*payload_length = payload_ndx;
 	return ndx;
 }
 
