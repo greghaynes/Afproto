@@ -93,8 +93,8 @@ uint8_t afproto_serialize_payload(const unsigned char *payload,
 
 #if TEST_GCC
 int main(int argc, char **argv) {
-	char buff[256];
-	char buff2[256];
+	unsigned char buff[256];
+	unsigned char buff2[256];
 	uint8_t length;
 	int i;
         uint8_t status = 0;
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
         printf("serialize_payload test\n");
         printf("======================\n");
-	length = afproto_serialize_payload("He\x59\xa3l\xa3l\x85o", 9, buff);
+	length = afproto_serialize_payload((unsigned char*)"He\x59\xa3l\xa3l\x85o", 9, buff);
 	for(i = 0;i < length;++i)
 		printf("%x ", (uint8_t)buff[i]);
 	printf("\n");
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 
         printf("\n\nget_payload test 2\n");
         printf("================\n");
-	afproto_get_payload("\xa3\x0e\x09\x04\x00\x00\x00\x00\x1a\xdf\x85\xa3\xc\x00\x00\x00\x00\x59", 18, buff2, &length);
+	afproto_get_payload((unsigned char*)"\xa3\x0e\x09\x04\x00\x00\x00\x00\x1a\xdf\x85\xa3\xc\x00\x00\x00\x00\x59", 18, buff2, &length);
 	printf("%d: ", length);
 	for(i = 0;i < length;i++)
 		printf("%c", buff2[i]);
