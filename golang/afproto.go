@@ -74,6 +74,10 @@ func (self *AfprotoFrame) Serialize(input []byte) []byte {
 func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 	var flag bool = false
 
+	if (len(incoming) < 1) {
+		return nil
+	}
+
 	//flag is true when we have found the start byte
 	for !flag {
 		switch incoming[0] {
