@@ -104,16 +104,16 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 	//flag is true if we have seen an escape char
 	flag = false
 	for _, thisByte := range incoming[3:] {
-        if flag {
-            self.stream = append(self.stream, thisByte)
-            flag = false
-        } else if thisByte == EscapeByte {
-            flag = true
-        } else if thisByte == EndByte {
-            break
-        } else {
-            self.stream = append(self.stream, thisByte)
-        }
+		if flag {
+			self.stream = append(self.stream, thisByte)
+			flag = false
+		} else if thisByte == EscapeByte {
+			flag = true
+		} else if thisByte == EndByte {
+			break
+		} else {
+			self.stream = append(self.stream, thisByte)
+		}
 	}
 
 	return self.stream
