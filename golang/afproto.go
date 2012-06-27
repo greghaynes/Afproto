@@ -10,7 +10,6 @@ const (
 	StartByte  byte = 0xA3
 	EndByte    byte = 0x59
 	EscapeByte byte = 0x85
-	BufferSize byte = 255
 )
 
 var crcTable = []byte{
@@ -44,7 +43,7 @@ func (self *AfprotoFrame) updateCrc(i byte) {
 func (self *AfprotoFrame) Serialize(input []byte) []byte {
 	var buffer []byte
 
-	self.stream = make([]byte, BufferSize)
+	self.stream = make([]byte, 0)
 	self.length = 0
 	self.crc = 0
 
@@ -75,6 +74,10 @@ func (self *AfprotoFrame) Serialize(input []byte) []byte {
 func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 	var flag bool = false
 
+	if (len(incoming) < 1) {
+		return nil
+	}
+
 	//flag is true when we have found the start byte
 	for !flag {
 		switch incoming[0] {
@@ -84,7 +87,12 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 			incoming = incoming[1:]
 			fallthrough
 		default:
-			incoming = incoming[1:]
+			if (len(incoming) > 1) {
+				incoming = incoming[1:]
+			} else {
+				/* reached end of incoming with no flags */
+				return nil
+			}
 		}
 	}
 
@@ -96,16 +104,16 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 	//flag is true if we have seen an escape char
 	flag = false
 	for _, thisByte := range incoming[3:] {
-        if flag {
-            self.stream = append(self.stream, thisByte)
-            flag = false
-        } else if thisByte == EscapeByte {
-            flag = true
-        } else if thisByte == EndByte {
-            break
-        } else {
-            self.stream = append(self.stream, thisByte)
-        }
+		if flag {
+			self.stream = append(self.stream, thisByte)
+			flag = false
+		} else if thisByte == EscapeByte {
+			flag = true
+		} else if thisByte == EndByte {
+			break
+		} else {
+			self.stream = append(self.stream, thisByte)
+		}
 	}
 
 	return self.stream
