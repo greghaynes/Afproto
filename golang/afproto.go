@@ -87,7 +87,12 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 			incoming = incoming[1:]
 			fallthrough
 		default:
-			incoming = incoming[1:]
+			if (len(incoming) > 1) {
+				incoming = incoming[1:]
+			} else {
+				/* reached end of incoming with no flags */
+				return nil
+			}
 		}
 	}
 
