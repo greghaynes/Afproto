@@ -10,7 +10,6 @@ const (
 	StartByte  byte = 0xA3
 	EndByte    byte = 0x59
 	EscapeByte byte = 0x85
-	BufferSize byte = 255
 )
 
 var crcTable = []byte{
@@ -44,7 +43,7 @@ func (self *AfprotoFrame) updateCrc(i byte) {
 func (self *AfprotoFrame) Serialize(input []byte) []byte {
 	var buffer []byte
 
-	self.stream = make([]byte, BufferSize)
+	self.stream = make([]byte, 0)
 	self.length = 0
 	self.crc = 0
 
