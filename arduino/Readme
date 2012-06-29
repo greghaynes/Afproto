@@ -1,0 +1,16 @@
+Afproto - Arduino Library
+=======
+
+***
+UNTESTED!
+***
+
+
+This is a simple arduino wrapper of the embedded_c afproto library. In
+order to compile and use it in arduino you should copy the contents of
+this directory to <sketchbook_dir>/libraries/Afproto. Then copy the
+embedded_c directory to <sketchbook_dir>/libraries/Afproto as well.
+
+Examples are included in the Afproto directory.
+
+(TODO: include usage instructions...)
