@@ -57,5 +57,11 @@ func TestAfproto(t *testing.T) {
 		t.Log(hex.Dump(rx_buf))
 		t.Error("nil expected, incorrect return value for malformed packet")
 	}
+
+	/* Extract() buffer length assumption bug */
+	rx_buf = afp.Extract([]byte("\xA3"))
+	if (rx_buf != nil) {
+		t.Error("nil expected, incorrect return for malformed packet")
+	}
 }
 

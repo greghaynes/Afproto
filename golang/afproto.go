@@ -96,6 +96,12 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 		}
 	}
 
+	/* incoming is now assumed to have at least 4 bytes in
+	it. Fail if it doesn't. */
+	if (len(incoming) < 4) {
+		return nil
+	}
+
 	//metadata
 	self.length = incoming[1]
 	self.crc = incoming[2]
