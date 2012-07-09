@@ -14,10 +14,11 @@ func TestAfproto(t *testing.T) {
 	var msg = []byte("He\x85\x59\x85llo!")
 	var test_buf []byte
 	var rx_buf []byte
+	var rx_num int = 0
 
 
 	test_buf = afp.Serialize(msg)
-
+	
 	/* Test length of test_buf */
 	if (len(test_buf) != 16) {
 		t.Log(len(test_buf))
@@ -27,10 +28,10 @@ func TestAfproto(t *testing.T) {
 		t.Fail()
 	}
 
-	rx_buf = afp.Extract(test_buf)
+	rx_num, rx_buf, err := afp.Extract(test_buf)
 
 	/* Did extraction fail? */
-	if (rx_buf == nil) {
+	if (err != nil) {
 		t.Error("Extract Failure")
 	}
 
@@ -43,25 +44,37 @@ func TestAfproto(t *testing.T) {
 	}
 
 	/* create a failure */
-	rx_buf = afp.Extract([]byte("\x33\x33\x33\x33\x33\x33\x33"))
-	if (rx_buf != nil) {
+	rx_num, rx_buf, err = afp.Extract([]byte("\x33\x33\x33\x33\x33\x33\x33"))
+	if (err == nil) {
 		t.Log(rx_buf)
 		t.Log(hex.Dump(rx_buf))
 		t.Error("nil expected, incorrect return value for malformed packet")
 	}
 
 	/* create another failure */
-	rx_buf = afp.Extract([]byte(""))
-	if (rx_buf != nil) {
+	rx_num, rx_buf, err = afp.Extract([]byte(""))
+	if (err == nil) {
 		t.Log(rx_buf)
 		t.Log(hex.Dump(rx_buf))
 		t.Error("nil expected, incorrect return value for malformed packet")
 	}
 
-	/* Extract() buffer length assumption bug */
-	rx_buf = afp.Extract([]byte("\xA3"))
-	if (rx_buf != nil) {
-		t.Error("nil expected, incorrect return for malformed packet")
+	/* for length assumption bug in Extract() */
+	rx_num, rx_buf, err = afp.Extract([]byte("\xA3"))
+	if (err == nil) {
+		t.Log(rx_num)
+		t.Error("Expected an error, got none")
+	}
+
+	/* rx_num test -- Keep track of how much of the RX buffer
+	Extract has covered*/
+	rx_num_test_buf := append([]byte("\x33\x33"), test_buf...)
+	rx_num, rx_buf, err = afp.Extract(rx_num_test_buf)
+	if (err == nil) {
+		if (rx_num != (len(test_buf) + 2)) {
+			t.Log("test buf len: ", len(test_buf))
+			t.Error("rx_num fail", rx_num, len(test_buf) + 2)
+		}
 	}
 }
 

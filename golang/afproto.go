@@ -6,6 +6,10 @@
 
 package afproto
 
+import (
+	"errors"
+)
+
 const (
 	StartByte  byte = 0xA3
 	EndByte    byte = 0x59
@@ -71,11 +75,13 @@ func (self *AfprotoFrame) Serialize(input []byte) []byte {
 	return self.stream
 }
 
-func (self *AfprotoFrame) Extract(incoming []byte) []byte {
+func (self *AfprotoFrame) Extract(incoming []byte) (int, []byte, error) {
 	var flag bool = false
+	var end_flag bool = false
+	var bytes_read int = 0
 
 	if (len(incoming) < 1) {
-		return nil
+		return 0, nil, errors.New("afproto.Extract() cannot extract an empty buffer")
 	}
 
 	//flag is true when we have found the start byte
@@ -85,21 +91,24 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 			flag = true
 		case EscapeByte:
 			incoming = incoming[1:]
+			bytes_read++
 			fallthrough
 		default:
 			if (len(incoming) > 1) {
 				incoming = incoming[1:]
+				bytes_read++
 			} else {
 				/* reached end of incoming with no flags */
-				return nil
+				return 0, nil, errors.New("afproto.Extract() found no valid packets in buffer")
+				//return nil
 			}
 		}
 	}
 
-	/* incoming is now assumed to have at least 4 bytes in
-	it. Fail if it doesn't. */
+	/* The next phase assumes that incoming is now of at least
+	length 4 */
 	if (len(incoming) < 4) {
-		return nil
+		return 0, nil, errors.New("afproto.Extract() found no valid packets in buffer")
 	}
 
 	//metadata
@@ -107,20 +116,38 @@ func (self *AfprotoFrame) Extract(incoming []byte) []byte {
 	self.crc = incoming[2]
 	self.stream = nil //ensure empty
 
+	bytes_read = bytes_read + 3
+
 	//flag is true if we have seen an escape char
 	flag = false
 	for _, thisByte := range incoming[3:] {
 		if flag {
 			self.stream = append(self.stream, thisByte)
 			flag = false
+			bytes_read++
 		} else if thisByte == EscapeByte {
 			flag = true
+			bytes_read++
 		} else if thisByte == EndByte {
+			end_flag = true
+			bytes_read++
 			break
 		} else {
 			self.stream = append(self.stream, thisByte)
+			bytes_read++
 		}
 	}
 
-	return self.stream
+	if (!end_flag) {
+		return 0, nil, errors.New("afproto.Extract() found no valid packets in buffer")
+	}
+
+	/* return 
+	 1. # of bytes before and in the payload 
+	 2. payload
+	 3. error
+	 */
+	
+	return bytes_read, self.stream, nil
+	//return self.stream
 }

@@ -27,8 +27,10 @@ func main() {
 	var temp uint16 = 0
 	var afp afproto.AfprotoFrame
 	var rx_payload_buf []byte
+	var rx_payload_n int = 0;
 	var interrupt = make(chan os.Signal, 1)
 	var rx_buf []byte
+
 
 	if (len(os.Args) < 2) {
 		fmt.Println("Must pass serial device as argument!")
@@ -80,9 +82,10 @@ func main() {
 			if (len(rx_buf) >= 6) {
 				//fmt.Println(len(rx_buf))
 				//fmt.Println(rx_buf[3])
-
-				rx_payload_buf = afp.Extract(rx_buf)
-				if (rx_payload_buf != nil) {
+				
+				rx_payload_n, rx_payload_buf, err = afp.Extract(rx_buf)
+				//rx_payload_buf = afp.Extract(rx_buf)
+				if (err == nil) {
 					/* Commented out bit is the
 					nice way to convert the raw
 					bytes to a type */
@@ -91,8 +94,12 @@ func main() {
 					temp = uint16(rx_payload_buf[0])
 					temp |= (uint16(rx_payload_buf[1]) << 8)
 					fmt.Println(temp)
+					
+					/* Remove the bytes we read from rx_buf */
+					rx_buf = rx_buf[rx_payload_n:]
 				} else {
-					fmt.Println("Afproto malformed packet?!")
+					log.Println(err)
+					//fmt.Println("Afproto malformed packet?!")
 				}
 			}
 		}
