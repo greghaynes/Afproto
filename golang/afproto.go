@@ -149,5 +149,4 @@ func (self *AfprotoFrame) Extract(incoming []byte) (int, []byte, error) {
 	 */
 	
 	return bytes_read, self.stream, nil
-	//return self.stream
 }
