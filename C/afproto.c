@@ -10,21 +10,18 @@
  *   -3   : Destination buffer too small
  *   -2   : Invalid CRC
  *   -1   : No valid message found
- *   >= 0 : Message ended at return value - 1
+ *   >= 0 : Message ended at src + return value
  */
 int afproto_get_data(const char *src,
     unsigned int src_len,
     char *dest,
     unsigned int *dest_len) {
-    if(dest_len < src_len)
-        return -2;
-
     const char *src_end = src + src_len;
     const char *dest_start = dest;
 
     // Advance src to start byte
     while(src < src_end && *src != AFPROTO_START_BYTE) ++src;
-    if(src == src_end)
+    if(src >= src_end)
         return -1;
 
     // Loop through the data
@@ -38,7 +35,6 @@ int afproto_get_data(const char *src,
                 ++src;
                 prev_escape = 1;
                 continue;
-            }
         }
         *(dest++) = *src;
         ++src;
@@ -53,8 +49,54 @@ int afproto_get_data(const char *src,
     src += 2;
 
     // Check end btye
-    if(src >= src_end || *src !- AFPROTO_END_BYTE)
+    if(src >= src_end || *src != AFPROTO_END_BYTE)
         return -1;
 
-    return dest - dest_start;
+    *dest_len = dest - dest_start;
+    return src_end - src;
+}
+
+int afproto_frame_data(const char *src,
+    unsigned int src_len,
+    char *dest,
+    unsigned int *dest_len) {
+    const char *dest_end = dest + *dest_len;
+    const char *src_end = src + src_len;
+    const char *dest_start = dest;
+
+    if(dest < dest_end)
+        *(dest++) = AFPROTO_START_BYTE;
+    else
+        return -1;
+
+    int prev_escape = 0;
+    while(dest < dest_end && src < src_end) {
+        if(prev_escape) {
+            prev_escape = 0;
+        }
+        else if (*src == AFPROTO_START_BYTE || *src == AFPROTO_ESC_BYTE){
+            prev_escape = 1;
+            *(dest++) = AFPROTO_ESC_BYTE;
+            continue;
+        }
+        *(dest++) = *src;
+    }
+
+    if(dest >= dest_end)
+        return -1;
+
+    // Set the CRC
+    // Dummy code
+    dest += 2;
+
+    if(dest >= dest_end)
+        return -1;
+
+    *(dest++) = AFPROTO_END_BYTE;
+    *dest_len = dest - dest_start;
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    return 0;
 }

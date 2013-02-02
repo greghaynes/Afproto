@@ -1,0 +1,8 @@
+#ifndef AFPROTO_H
+#define AFPROTO_H
+
+#define AFPROTO_START_BYTE 0x7D
+#define AFPROTO_ESC_BYTE 0x7E
+#define AFPROTO_END_BYTE 0x7D
+
+#endif
