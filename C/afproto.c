@@ -62,17 +62,13 @@ int afproto_frame_data(const char *src,
     unsigned int src_len,
     char *dest,
     unsigned int *dest_len) {
-    const char *dest_end = dest + *dest_len;
     const char *src_end = src + src_len;
     const char *dest_start = dest;
 
-    if(dest < dest_end)
-        *(dest++) = AFPROTO_START_BYTE;
-    else
-        return -1;
+    *(dest++) = AFPROTO_START_BYTE;
 
     int prev_escape = 0;
-    while(dest < dest_end && src < src_end) {
+    while(src < src_end) {
         if(prev_escape) {
             prev_escape = 0;
             *(dest++) = *(src) ^ 0x20;
@@ -84,23 +80,28 @@ int afproto_frame_data(const char *src,
         }
         else
             *(dest++) = *src;
+        ++src;
     }
-
-    if(dest >= dest_end)
-        return -1;
 
     // Set the CRC
     // Dummy code
     dest += 2;
-
-    if(dest >= dest_end)
-        return -1;
 
     *(dest++) = AFPROTO_END_BYTE;
     *dest_len = dest - dest_start;
     return 0;
 }
 
+#ifdef AFPROTO_TEST
+#include <stdio.h>
+
 int main(int argc, char **argv) {
+    char buff[16];
+    unsigned int write_len;
+
+    afproto_frame_data("hello", 5, buff, &write_len);
+    afproto_get_data(buff, write_len, buff, &write_len);
+    printf("%s\n", buff);
     return 0;
 }
+#endif
