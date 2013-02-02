@@ -30,13 +30,15 @@ int afproto_get_data(const char *src,
     while(src < src_end && *src != AFPROTO_START_BYTE) {
         if(prev_escape) {
             prev_escape = 0;
+            *(dest++) = (*src) ^ 0x20;
         }
         else if (*src == AFPROTO_ESC_BYTE) {
                 ++src;
                 prev_escape = 1;
                 continue;
         }
-        *(dest++) = *src;
+        else
+            *(dest++) = *src;
         ++src;
     }
 
@@ -73,13 +75,15 @@ int afproto_frame_data(const char *src,
     while(dest < dest_end && src < src_end) {
         if(prev_escape) {
             prev_escape = 0;
+            *(dest++) = *(src) ^ 0x20;
         }
         else if (*src == AFPROTO_START_BYTE || *src == AFPROTO_ESC_BYTE){
             prev_escape = 1;
             *(dest++) = AFPROTO_ESC_BYTE;
             continue;
         }
-        *(dest++) = *src;
+        else
+            *(dest++) = *src;
     }
 
     if(dest >= dest_end)
