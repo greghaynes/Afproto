@@ -33,12 +33,14 @@ static const unsigned short crc16tab[256]= {
 	0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 };
 
-unsigned short crc16_buff(const void *buf, int len)
-{
-	register int counter;
-	register unsigned short crc = 0;
-	for( counter = 0; counter < len; counter++)
+unsigned short crc16_buff(const void *buf, int len) {
+	int counter;
+	unsigned short crc = 0;
+	for(counter = 0;counter < len;counter++)
 		crc = (crc<<8) ^ crc16tab[((crc>>8) ^ *(char *)buf++)&0x00FF];
 	return crc;
 }
 
+unsigned short crc16_floating(char next, unsigned short seed) {
+    return (seed<<8) ^ crc16tab[(seed>>8) ^ next & 0x00FF];
+}
