@@ -18,6 +18,7 @@ int afproto_get_data(const char *src,
     unsigned int *dest_len) {
     const char *src_end = src + src_len;
     const char *dest_start = dest;
+    unsigned int len_off = 0;
 
     // Advance src to start byte
     while(src < src_end && *src != AFPROTO_START_BYTE) ++src;
@@ -33,28 +34,23 @@ int afproto_get_data(const char *src,
             *(dest++) = (*src) ^ 0x20;
         }
         else if (*src == AFPROTO_ESC_BYTE) {
-                ++src;
+                ++len_off;
                 prev_escape = 1;
-                continue;
         }
         else
             *(dest++) = *src;
         ++src;
     }
 
-    // We hit src end during data loop
-    if(src == src_end)
-        return -1;
-
     // Check CRC
     // Dummy code
-    src += 2;
+    short crc = *((short*)src-1);
 
     // Check end btye
-    if(src >= src_end || *src != AFPROTO_END_BYTE)
+    if(*src != AFPROTO_END_BYTE)
         return -1;
 
-    *dest_len = dest - dest_start;
+    *dest_len = (dest - dest_start) - len_off;
     return src_end - src;
 }
 
@@ -88,7 +84,7 @@ int afproto_frame_data(const char *src,
     dest += 2;
 
     *(dest++) = AFPROTO_END_BYTE;
-    *dest_len = dest - dest_start;
+    *dest_len = dest - dest_start - 1;
     return 0;
 }
 
@@ -105,8 +101,11 @@ int main(int argc, char **argv) {
         orig_msg[i]=(char)i;
     orig_msg[257] = 0;
 
-    afproto_frame_data(orig_msg, 256, buff, &write_len);
-    afproto_get_data(buff, write_len, buff, &write_len);
+    if(afproto_frame_data(orig_msg, 256, buff, &write_len) != 0)
+        printf("Data framing error!\n");
+    printf("Frame is %d bytes long\n", write_len);
+    if(afproto_get_data(buff, write_len, buff, &write_len) != 0)
+        printf("Get data error!\n");
 
     for(i = 0;i < 256;++i) {
         if(buff[i] != orig_msg[i]) {
