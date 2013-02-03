@@ -18,7 +18,7 @@ int afproto_get_data(const char *src,
     unsigned int *dest_len) {
     const char *src_end = src + src_len;
     const char *dest_start = dest;
-    unsigned int len_off = 0;
+    short crc_check = 0;
 
     // Advance src to start byte
     while(src < src_end && *src != AFPROTO_START_BYTE) ++src;
@@ -28,29 +28,41 @@ int afproto_get_data(const char *src,
     // Loop through the data
     ++src;
     int prev_escape = 0;
-    while(src < src_end && *src != AFPROTO_START_BYTE) {
+    char orig_char;
+    while(src < src_end - 2) {
         if(prev_escape) {
             prev_escape = 0;
-            *(dest++) = (*src) ^ 0x20;
+            orig_char = (*src) ^ 0x20;
+            crc_check = crc16_floating(orig_char, crc_check);
+            *(dest++) = orig_char;
         }
         else if (*src == AFPROTO_ESC_BYTE) {
-                ++len_off;
                 prev_escape = 1;
         }
-        else
-            *(dest++) = *src;
+        else {
+            orig_char = *src;
+            crc_check = crc16_floating(orig_char, crc_check);
+            *(dest++) = orig_char;
+        }
         ++src;
     }
 
     // Check CRC
     // Dummy code
-    short crc = *((short*)src-1);
+    short crc = *((short*)src);
+    if(crc != crc_check) {
+        printf("crc is %hx but expected %hx\n", crc, crc_check);
+        return -2;
+    }
+    src += 2;
 
     // Check end btye
-    if(*src != AFPROTO_END_BYTE)
+    if(*src != AFPROTO_END_BYTE) {
+        printf("didnt detect end byte\n");
         return -1;
+    }
 
-    *dest_len = (dest - dest_start) - len_off;
+    *dest_len = dest - dest_start;
     return src_end - src;
 }
 
@@ -60,6 +72,7 @@ int afproto_frame_data(const char *src,
     unsigned int *dest_len) {
     const char *src_end = src + src_len;
     const char *dest_start = dest;
+    short crc = 0;
 
     *(dest++) = AFPROTO_START_BYTE;
 
@@ -67,20 +80,24 @@ int afproto_frame_data(const char *src,
     while(src < src_end) {
         if(prev_escape) {
             prev_escape = 0;
+            crc = crc16_floating(*src, crc);
             *(dest++) = *(src) ^ 0x20;
         }
-        else if (*src == AFPROTO_START_BYTE || *src == AFPROTO_ESC_BYTE){
+        else if (*src == AFPROTO_START_BYTE || *src == AFPROTO_ESC_BYTE) {
             prev_escape = 1;
             *(dest++) = AFPROTO_ESC_BYTE;
             continue;
         }
-        else
+        else {
+            crc = crc16_floating(*src, crc);
             *(dest++) = *src;
+        }
         ++src;
     }
 
     // Set the CRC
     // Dummy code
+    *((short*)dest) = crc;
     dest += 2;
 
     *(dest++) = AFPROTO_END_BYTE;
