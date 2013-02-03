@@ -96,12 +96,30 @@ int afproto_frame_data(const char *src,
 #include <stdio.h>
 
 int main(int argc, char **argv) {
-    char buff[16];
+    char orig_msg[257];
+    char buff[512];
     unsigned int write_len;
 
-    afproto_frame_data("hello", 5, buff, &write_len);
+    int i;
+    for(i = 0;i < 256;++i)
+        orig_msg[i]=(char)i;
+    orig_msg[257] = 0;
+
+    afproto_frame_data(orig_msg, 256, buff, &write_len);
     afproto_get_data(buff, write_len, buff, &write_len);
-    printf("%s\n", buff);
+
+    for(i = 0;i < 256;++i) {
+        if(buff[i] != orig_msg[i]) {
+            printf("Error, %d\n", i);
+            return 1;
+        }
+    }
+
+    if(write_len != 256) {
+        printf("Length not properly detected, got %d\n", write_len);
+        return 1;
+    }
+    printf("Win!\n");
     return 0;
 }
 #endif
