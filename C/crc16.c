@@ -44,3 +44,12 @@ unsigned short crc16_buff(const void *buf, int len) {
 unsigned short crc16_floating(char next, unsigned short seed) {
     return (seed<<8) ^ crc16tab[(seed>>8) ^ next & 0x00FF];
 }
+
+#ifdef CRC16_TEST
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+    printf("%d", crc16_floating('a', 28807));
+}
+
+#endif
