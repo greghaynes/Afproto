@@ -33,6 +33,12 @@ crc16tab = [
     0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 ]
 
+def crc16_buff(buff):
+    crc = 0
+    for ch in buff:
+        crc = crc16_floating(ch, crc)
+    return crc
+
 def crc16_floating(next_byte, seed):
     return ((seed << 8) ^ crc16tab[(seed >> 8) ^ (ord(next_byte) & 0x00FF)])\
         & 0xFFFF
