@@ -1,8 +1,9 @@
 import crc16
+import struct
 
-start_byte = 0x7D
-esc_byte = 0x7E
-end_byte = 0x7D
+start_byte = chr(0x7D)
+esc_byte = chr(0x7E)
+end_byte = chr(0x7D)
 
 def afproto_get_data(raw_frame):
     '''
@@ -18,4 +19,10 @@ def afproto_frame_data(data):
     '''
     ret = start_byte
     ret += data
-    ret = crc16.crc16_buff(data)
+    ret += struct.pack('H', crc16.crc16_buff(data))
+    ret += end_byte
+    return ret
+
+if __name__ == '__main__':
+    for ch in afproto_frame_data('test'):
+        print '%x' % ord(ch),
