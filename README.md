@@ -21,7 +21,8 @@ The escape byte is 0x7D. Whenever 0x7E or 0x7D occur in the message that byte
 is prefixed by the escape byte. That byte is then x-or'd with 0x20. As an
 example, 0x7E in a message would become 0x7E5E.
 
-Immediately following the data is a 16bit CRC (xmodem).
+Immediately following the data is a 16bit CRC (xmodem). The CRC checks the
+serialized data (including escape characters).
 
 Immediately following the CRC is the end byte.
 
