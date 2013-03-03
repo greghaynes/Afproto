@@ -12,9 +12,9 @@ END_BYTE = chr(0x7D)
 
 def afproto_get_data(raw_frame):
     '''
-       Returns a new raw frame which was not considered for parsing. The
-       typical usage is to reset a read buffer to this returned data after
-       every call
+    Returns a new raw frame which was not considered for parsing. The
+    typical usage is to reset a read buffer to this returned data after
+    every call
     '''
     start_ndx = 0
     end_ndx = 0
@@ -48,7 +48,7 @@ def afproto_get_data(raw_frame):
 
 def afproto_frame_data(data):
     '''
-       Returns a raw frame which contains the supplied data
+    Returns a raw frame which contains the supplied data
     '''
     ret = START_BYTE
     crc = 0
