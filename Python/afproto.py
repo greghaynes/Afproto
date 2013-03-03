@@ -87,14 +87,15 @@ def afproto_frame_data(data):
     '''
     ret = START_BYTE
     data = escape_data(data)
-    crc = crc16.crc16_buff(data)
+    crc = struct.pack('H', crc16.crc16_buff(data))
     ret += data
-    ret += struct.pack('H', crc)
+    ret += escape_data(crc)
     ret += END_BYTE
     return ret
 
 
 def main():
+    'Main method'
     for chr_ in afproto_frame_data('test'):
         print '%x' % ord(chr_),
 
