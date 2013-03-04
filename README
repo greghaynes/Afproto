@@ -1,9 +1,0 @@
-Afproto - Serial Data Framing Protocol for 8bit MCUs
-----------
-
-NOTE: This protocol is deprecated in favor of version 2. Please see the branch
-v2 for more information.
-
-Each directory contains source code for parsing the protocol in a specific
-language and or implementation.
-
