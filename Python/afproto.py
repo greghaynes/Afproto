@@ -1,6 +1,6 @@
 '''
 Encode and decode afproto frames. For more information on the protocol see
-http://github.com/greghaynes/Afproto/tree/v2
+https://github.com/greghaynes/Afproto/
 '''
 
 import crc16
