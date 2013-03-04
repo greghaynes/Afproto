@@ -1,7 +1,9 @@
 Afproto
 -------
 
-A framing protocol optimized for embedded communication
+A framing protocol optimized for embedded communication. Optimized for simple
+and efficient encoding and decoding (single pass for each operation), and
+contains a 16bit CRC.
 
 
 ## Repository Layout
