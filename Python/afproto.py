@@ -63,14 +63,15 @@ def afproto_get_data(raw_frame):
     if end_ndx == -1:
         return (None, raw_frame[start_ndx:])
 
-    contents = unescape_data(raw_frame[start_ndx+1:end_ndx-1])
+    contents = unescape_data(raw_frame[start_ndx+1:end_ndx])
     data = contents[:-2]
 
-    sent_crc = struct.unpack('H', contents[-2:])
+    sent_crc = struct.unpack('H', contents[-2:])[0]
     if sent_crc != crc16.crc16_buff(data):
-        return (None, raw_frame[start_ndx+1:])
+        print 'invalid crc'
+        return (None, raw_frame[end_ndx+1:])
 
-    return (data, raw_frame[start_ndx+1:])
+    return (data, raw_frame[end_ndx+1:])
 
 
 def afproto_frame_data(data):
@@ -87,8 +88,8 @@ def afproto_frame_data(data):
 
 def main():
     'Main method'
-    for chr_ in afproto_frame_data('test'):
-        print '%x' % ord(chr_),
+    resp = afproto_get_data(afproto_frame_data('test') + afproto_frame_data('othertest'))
+    print resp, afproto_get_data(resp[1])
 
 
 if __name__ == '__main__':
