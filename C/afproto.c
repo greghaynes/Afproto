@@ -43,7 +43,6 @@ int afproto_get_data(const char *src,
             *(dest++) = orig_char;
         }
         else if (*src == AFPROTO_ESC_BYTE) {
-            crc_check = crc16_floating(AFPROTO_ESC_BYTE, crc_check);
             prev_escape = 1;
         }
         else {
@@ -90,7 +89,6 @@ int afproto_frame_data(const char *src,
         else if (*src == AFPROTO_START_BYTE || *src == AFPROTO_ESC_BYTE) {
             prev_escape = 1;
             *(dest++) = AFPROTO_ESC_BYTE;
-            crc = crc16_floating(AFPROTO_ESC_BYTE, crc);
             continue;
         }
         else {
