@@ -47,38 +47,30 @@ def escape_data(data):
 
 def afproto_get_data(raw_frame):
     '''
-    Returns a new raw frame which was not considered for parsing. The
-    typical usage is to reset a read buffer to this returned data after
-    every call
+    Returns a tuple of (data, extra_data). The data is data which was decoded
+    from the passed frame, the extra_data is data that was not considered for
+    parsing (and should probably be sent in a subsequent call).
+
+    If no valid frame was found, data is None
+
+    extra will always be a string (empty string if all data was considered).
     '''
-    start_ndx = 0
-    end_ndx = 0
-    guts_buff = ''
-    try:
-        prev_escape = False
-        while raw_frame[start_ndx] != START_BYTE or prev_escape:
-            if prev_escape:
-                prev_escape = False
-            if raw_frame[start_ndx] == ESC_BYTE:
-                prev_escape = True
-            start_ndx += 1
+    start_ndx = raw_frame.find(START_BYTE)
+    if start_ndx == -1:
+        return (None, '')
 
-        end_ndx = start_ndx + 1
-        while raw_frame[end_ndx] != END_BYTE or prev_escape:
-            if prev_escape:
-                prev_escape = False
+    end_ndx = raw_frame.find(END_BYTE, start_ndx + 1)
+    if end_ndx == -1:
+        return (None, raw_frame[start_ndx:])
 
-            if raw_frame[end_ndx] == ESC_BYTE:
-                prev_escape = True
-            else:
-                guts_buff += raw_frame[end_ndx]
-            end_ndx += 1
-    except IndexError:
-        return raw_frame[start_ndx:]
+    contents = unescape_data(raw_frame[start_ndx+1:end_ndx-1])
+    data = contents[:-2]
 
-    data = guts_buff[:-2]
-    raw_crc = guts_buff[-2:]
-    return data
+    sent_crc = struct.unpack('H', contents[-2:])
+    if sent_crc != crc16.crc16_buff(data):
+        return (None, raw_frame[start_ndx+1:])
+
+    return (data, raw_frame[start_ndx+1:])
 
 
 def afproto_frame_data(data):
@@ -86,9 +78,8 @@ def afproto_frame_data(data):
     Returns a raw frame which contains the supplied data
     '''
     ret = START_BYTE
-    data = escape_data(data)
     crc = struct.pack('H', crc16.crc16_buff(data))
-    ret += data
+    ret += escape_data(data)
     ret += escape_data(crc)
     ret += END_BYTE
     return ret
