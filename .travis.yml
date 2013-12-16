@@ -2,4 +2,4 @@ language: c
 compiler:
     - gcc
     - clang
-scripts: cd C && make
+script: cd C && make
