@@ -8,7 +8,7 @@ import struct
 
 START_BYTE = '\x7D'
 ESC_BYTE = '\x7E'
-END_BYTE = '\x7D'
+END_BYTE = '\x7F'
 
 def unescape_data(data):
     '''
