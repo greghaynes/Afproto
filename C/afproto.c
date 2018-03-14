@@ -99,9 +99,12 @@ int afproto_frame_data(const char *src,
     }
 
     // Set the CRC
-    // Dummy code
-    *((short*)dest) = crc;
-    dest += 2;
+
+    //Casting the CRC to lets the word be assigned to a non-word boundary in memory
+    *(dest) = (char)crc;
+    dest++;
+    *(dest) = (char)(crc >>8);
+    dest++;
 
     *(dest++) = AFPROTO_END_BYTE;
     *dest_len = dest - dest_start - 1;
