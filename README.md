@@ -3,9 +3,7 @@ Afproto
 
 A framing protocol optimized for embedded communication. Optimized for simple
 and efficient encoding and decoding (single pass for each operation), and
-contains a 16bit CRC.
-
-[![Build Status](https://travis-ci.org/greghaynes/Afproto.png)](https://travis-ci.org/greghaynes/Afproto)
+contains a 16bit CRC.  Forked from gregHaynes/Afproto
 
 
 ## Repository Layout
